@@ -1,0 +1,105 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.aol.ido</groupId>
+  <artifactId>libzmq-aol</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>libzmq-aol</name>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <maven-assembly-plugin.version>2.3</maven-assembly-plugin.version>
+
+      <native.arch>${os.arch}</native.arch>
+    <native.path.resolved>${native.path}</native.path.resolved>
+    <native.library-path.resolved>${native.library-path}</native.library-path.resolved>
+</properties>
+
+<profiles>
+<profile>
+    <id>Linux</id>
+    <activation>
+        <property>
+            <name>os.name</name>
+            <value>Linux</value>
+        </property>
+    </activation>
+    <properties>
+        <native.os>${os.name}</native.os>
+        <native.path>src/.libs/libzmq.so</native.path>
+        <!-- Use platform-specific path separators here: -->
+        <native.library-path>src/.libs/</native.library-path>
+    </properties>
+</profile>
+
+<profile>
+    <id>Windows</id>
+    <activation>
+        <os>
+            <family>windows</family>
+        </os>
+    </activation>
+    <properties>
+        <native.os>Windows</native.os>
+        <native.path>lib/zmq.dll</native.path>
+        <!-- Use platform-specific path separators here: -->
+        <native.library-path>lib</native.library-path>
+    </properties>
+</profile>
+
+<profile>
+    <id>Mac</id>
+    <activation>
+        <os>
+            <family>mac</family>
+        </os>
+    </activation>
+    <properties>
+        <native.os>${os.name}</native.os>
+        <native.path>src/.libs/libzmq.dylib</native.path>
+        <!-- Use platform-specific path separators here: -->
+        <native.library-path>src/.libs/</native.library-path>
+    </properties>
+</profile>
+
+<profile>
+    <id>release</id>
+    <properties>
+        <native.path.resolved>..${file.separator}..${file.separator}${native.path}</native.path.resolved>
+        <native.library-path.resolved>..${file.separator}..${file.separator}${native.library-path}</native.library-path.resolved>
+    </properties>
+</profile>
+</profiles>
+
+
+    <build>
+    <sourceDirectory>src</sourceDirectory>
+
+    <plugins>
+
+    <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>${maven-assembly-plugin.version}</version>
+        <configuration>
+            <descriptors>
+                <!-- Assembly contents are defined in this file -->
+                <descriptor>nativejar.xml</descriptor>
+            </descriptors>
+        </configuration>
+        <executions>
+            <execution>
+                <id>make-assembly</id>
+                <phase>package</phase>
+                <goals>
+                    <goal>single</goal>
+                </goals>
+            </execution>
+        </executions>
+    </plugin>
+        </plugins>
+    </build>
+</project>
