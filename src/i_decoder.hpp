@@ -30,8 +30,9 @@ namespace zmq
 
     //  Interface to be implemented by message decoder.
 
-    struct i_decoder
+    class i_decoder
     {
+    public:
         virtual ~i_decoder () {}
 
         virtual void set_msg_sink (i_msg_sink *msg_sink_) = 0;
@@ -40,7 +41,7 @@ namespace zmq
 
         virtual size_t process_buffer (unsigned char *data_, size_t size_) = 0;
 
-        virtual bool stalled () const = 0;
+        virtual bool stalled () = 0;
 
         virtual bool message_ready_size (size_t msg_sz) = 0;
     };

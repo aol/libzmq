@@ -20,8 +20,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdarg.h>
-
 #include "session_base.hpp"
 #include "i_engine.hpp"
 #include "err.hpp"
@@ -120,11 +118,6 @@ zmq::session_base_t::session_base_t (class io_thread_t *io_thread_,
     identity_received (false),
     addr (addr_)
 {
-    //  Identities are not exchanged for raw sockets
-    if (options.raw_sock) {
-        identity_sent = true;
-        identity_received = true;
-    }
 }
 
 zmq::session_base_t::~session_base_t ()
@@ -156,8 +149,9 @@ void zmq::session_base_t::attach_pipe (pipe_t *pipe_)
 
 int zmq::session_base_t::pull_msg (msg_t *msg_)
 {
-    //  First message to send is identity
-    if (unlikely (!identity_sent)) {
+    //  Unless the socket is in raw mode, the first
+    //  message we send is its identity.
+    if (unlikely (!identity_sent && !options.raw_sock)) {
         int rc = msg_->init_size (options.identity_size);
         errno_assert (rc == 0);
         memcpy (msg_->data (), options.identity, options.identity_size);
@@ -177,8 +171,9 @@ int zmq::session_base_t::pull_msg (msg_t *msg_)
 
 int zmq::session_base_t::push_msg (msg_t *msg_)
 {
-    //  First message to receive is identity
-    if (unlikely (!identity_received)) {
+    //  Unless the socket is in raw mode, the first
+    //  message we receive is its identity.
+    if (unlikely (!identity_received && !options.raw_sock)) {
         msg_->set_flags (msg_t::identity);
         identity_received = true;
         if (!options.recv_identity) {

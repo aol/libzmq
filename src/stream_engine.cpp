@@ -52,10 +52,10 @@
 
 zmq::stream_engine_t::stream_engine_t (fd_t fd_, const options_t &options_, const std::string &endpoint_) :
     s (fd_),
+    io_enabled (false),
     inpos (NULL),
     insize (0),
     decoder (NULL),
-    input_error (false),
     outpos (NULL),
     outsize (0),
     encoder (NULL),
@@ -134,6 +134,7 @@ void zmq::stream_engine_t::plug (io_thread_t *io_thread_,
     //  Connect to I/O threads poller object.
     io_object_t::plug (io_thread_);
     handle = add_fd (s);
+    io_enabled = true;
 
     if (options.raw_sock) {
         // no handshaking for raw sock, instantiate raw encoder and decoders
@@ -169,7 +170,10 @@ void zmq::stream_engine_t::unplug ()
     plugged = false;
 
     //  Cancel all fd subscriptions.
-    rm_fd (handle);
+    if (io_enabled) {
+        rm_fd (handle);
+        io_enabled = false;
+    }
 
     //  Disconnect from I/O threads poller object.
     io_object_t::unplug ();
@@ -190,7 +194,7 @@ void zmq::stream_engine_t::terminate ()
 
 void zmq::stream_engine_t::in_event ()
 {
-    //  If still handshaking, receive and prcess the greeting message.
+    //  If still handshaking, receive and process the greeting message.
     if (unlikely (handshaking))
         if (!handshake ())
             return;
@@ -250,9 +254,10 @@ void zmq::stream_engine_t::in_event ()
     //  waiting for input events and postpone the termination
     //  until after the session has accepted the message.
     if (disconnection) {
-        input_error = true;
-        if (decoder->stalled ())
-            reset_pollin (handle);
+        if (decoder->stalled ()) {
+            rm_fd (handle);
+            io_enabled = false;
+        }
         else
             error ();
     }
@@ -319,7 +324,7 @@ void zmq::stream_engine_t::activate_out ()
 
 void zmq::stream_engine_t::activate_in ()
 {
-    if (input_error) {
+    if (unlikely (!io_enabled)) {
         //  There was an input error but the engine could not
         //  be terminated (due to the stalled decoder).
         //  Flush the pending message and terminate the engine now.
@@ -385,9 +390,8 @@ bool zmq::stream_engine_t::handshake ()
     //  Position of the version field in the greeting.
     const size_t version_pos = 10;
 
-    //  Is the peer using the unversioned protocol?
-    //  If so, we send and receive rests of identity
-    //  messages.
+    //  Is the peer using ZMTP/1.0 with no version number?
+    //  If so, we send and receive rests of identity messages
     if (greeting [0] != 0xff || !(greeting [9] & 0x01)) {
         encoder = new (std::nothrow) encoder_t (out_batch_size);
         alloc_assert (encoder);
@@ -412,8 +416,8 @@ bool zmq::stream_engine_t::handshake ()
         insize = greeting_bytes_read;
 
         //  To allow for interoperability with peers that do not forward
-        //  their subscriptions, we inject a phony subsription
-        //  message into the incomming message stream. To put this
+        //  their subscriptions, we inject a phony subscription
+        //  message into the incoming message stream. To put this
         //  message right after the identity message, we temporarily
         //  divert the message stream from session to ourselves.
         if (options.type == ZMQ_PUB || options.type == ZMQ_XPUB)
@@ -479,7 +483,7 @@ int zmq::stream_engine_t::push_msg (msg_t *msg_)
 void zmq::stream_engine_t::error ()
 {
     zmq_assert (session);
-    socket->event_disconnected (endpoint.c_str(), s);
+    socket->event_disconnected (endpoint, s);
     session->detach ();
     unplug ();
     delete this;

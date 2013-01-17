@@ -49,13 +49,13 @@ zmq::options_t::options_t () :
     delay_on_disconnect (true),
     filter (false),
     recv_identity (false),
+    raw_sock (false),
     tcp_keepalive (-1),
     tcp_keepalive_cnt (-1),
     tcp_keepalive_idle (-1),
     tcp_keepalive_intvl (-1),
     socket_id (0)
 {
-    raw_sock = false;
 }
 
 int zmq::options_t::setsockopt (int option_, const void *optval_,
@@ -320,20 +320,23 @@ int zmq::options_t::setsockopt (int option_, const void *optval_,
             else {
                 std::string filter_str ((const char*) optval_, optvallen_);
 
-                tcp_address_mask_t filter;
-                int rc = filter.resolve (filter_str.c_str (), ipv4only ? true : false);
+                tcp_address_mask_t mask;
+                int rc = mask.resolve (filter_str.c_str (), ipv4only ? true : false);
                 if (rc != 0) {
                     errno = EINVAL;
                     return -1;
                 }
-                tcp_accept_filters.push_back(filter);
+                tcp_accept_filters.push_back(mask);
 
                 return 0;
             }
         }
+    default:
+        {
+            errno = EINVAL;
+            return -1;
+        }
     }
-    errno = EINVAL;
-    return -1;
 }
 
 int zmq::options_t::getsockopt (int option_, void *optval_, size_t *optvallen_)

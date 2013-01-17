@@ -95,7 +95,11 @@ zmq::signaler_t::~signaler_t ()
     int rc = close (r);
     errno_assert (rc == 0);
 #elif defined ZMQ_HAVE_WINDOWS
-    int rc = closesocket (w);
+    struct linger so_linger = { 1, 0 };
+    int rc = setsockopt (w, SOL_SOCKET, SO_LINGER,
+        (char *)&so_linger, sizeof (so_linger));
+    wsa_assert (rc != SOCKET_ERROR);
+    rc = closesocket (w);
     wsa_assert (rc != SOCKET_ERROR);
     rc = closesocket (r);
     wsa_assert (rc != SOCKET_ERROR);
@@ -202,8 +206,8 @@ void zmq::signaler_t::recv ()
     //  one, return it back to the eventfd object.
     if (unlikely (dummy == 2)) {
         const uint64_t inc = 1;
-        ssize_t sz = write (w, &inc, sizeof (inc));
-        errno_assert (sz == sizeof (inc));
+        ssize_t sz2 = write (w, &inc, sizeof (inc));
+        errno_assert (sz2 == sizeof (inc));
         return;
     }
 
@@ -234,8 +238,10 @@ int zmq::signaler_t::make_fdpair (fd_t *r_, fd_t *w_)
     return 0;
 
 #elif defined ZMQ_HAVE_WINDOWS
-    SECURITY_DESCRIPTOR sd = {0};
-    SECURITY_ATTRIBUTES sa = {0};
+    SECURITY_DESCRIPTOR sd;
+    SECURITY_ATTRIBUTES sa;
+    memset (&sd, 0, sizeof (sd));
+    memset (&sa, 0, sizeof (sa));
 
     InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
     SetSecurityDescriptorDacl(&sd, TRUE, 0, FALSE);
@@ -324,6 +330,10 @@ int zmq::signaler_t::make_fdpair (fd_t *r_, fd_t *w_)
 
     //  Exit the critical section.
     brc = SetEvent (sync);
+    win_assert (brc != 0);
+
+    // Release the kernel object
+    brc = CloseHandle (sync);
     win_assert (brc != 0);
 
     return 0;

@@ -85,7 +85,7 @@ void zmq::tcp_listener_t::in_event ()
     //  If connection was reset by the peer in the meantime, just ignore it.
     //  TODO: Handle specific errors like ENFILE/EMFILE etc.
     if (fd == retired_fd) {
-        socket->event_accept_failed (endpoint.c_str(), zmq_errno());
+        socket->event_accept_failed (endpoint, zmq_errno());
         return;
     }
 
@@ -108,7 +108,7 @@ void zmq::tcp_listener_t::in_event ()
     session->inc_seqnum ();
     launch_child (session);
     send_attach (session, engine, false);
-    socket->event_accepted (endpoint.c_str(), fd);
+    socket->event_accepted (endpoint, fd);
 }
 
 void zmq::tcp_listener_t::close ()
@@ -121,7 +121,7 @@ void zmq::tcp_listener_t::close ()
     int rc = ::close (s);
     errno_assert (rc == 0);
 #endif
-    socket->event_closed (endpoint.c_str(), s);
+    socket->event_closed (endpoint, s);
     s = retired_fd;
 }
 
@@ -223,7 +223,7 @@ int zmq::tcp_listener_t::set_address (const char *addr_)
         goto error;
 #endif
 
-    socket->event_listening (endpoint.c_str(), s);
+    socket->event_listening (endpoint, s);
     return 0;
 
 error:
@@ -240,7 +240,8 @@ zmq::fd_t zmq::tcp_listener_t::accept ()
     //  Accept one connection and deal with different failure modes.
     zmq_assert (s != retired_fd);
 
-    struct sockaddr_storage ss = {};
+    struct sockaddr_storage ss;
+    memset (&ss, 0, sizeof (ss));
 #ifdef ZMQ_HAVE_HPUX
     int ss_len = sizeof (ss);
 #else

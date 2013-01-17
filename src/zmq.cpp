@@ -56,7 +56,7 @@
 
 
 // XSI vector I/O
-#if ZMQ_HAVE_UIO
+#if defined ZMQ_HAVE_UIO
 #include <sys/uio.h>
 #else
 struct iovec {
@@ -980,38 +980,50 @@ int zmq_proxy (void *frontend_, void *backend_, void *control_)
 
 //  The deprecated device functionality
 
-int zmq_device (int type, void *frontend_, void *backend_)
+int zmq_device (int /* type */, void *frontend_, void *backend_)
 {
     return zmq::proxy (
         (zmq::socket_base_t*) frontend_,
         (zmq::socket_base_t*) backend_, NULL);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//  0MQ utils - to be used by perf tests
-////////////////////////////////////////////////////////////////////////////////
+//  Callback to free socket event data
 
-void zmq_sleep (int seconds_)
+void zmq_free_event (void *event_data, void * /* hint */)
 {
-#if defined ZMQ_HAVE_WINDOWS
-    Sleep (seconds_ * 1000);
-#else
-    sleep (seconds_);
-#endif
-}
+    zmq_event_t *event = (zmq_event_t *) event_data;
 
-void *zmq_stopwatch_start ()
-{
-    uint64_t *watch = (uint64_t*) malloc (sizeof (uint64_t));
-    alloc_assert (watch);
-    *watch = zmq::clock_t::now_us ();
-    return (void*) watch;
-}
-
-unsigned long zmq_stopwatch_stop (void *watch_)
-{
-    uint64_t end = zmq::clock_t::now_us ();
-    uint64_t start = *(uint64_t*) watch_;
-    free (watch_);
-    return (unsigned long) (end - start);
+    switch (event->event) {
+    case ZMQ_EVENT_CONNECTED:
+        free (event->data.connected.addr);
+        break;
+    case ZMQ_EVENT_CONNECT_DELAYED:
+        free (event->data.connect_delayed.addr);
+        break;
+    case ZMQ_EVENT_CONNECT_RETRIED:
+        free (event->data.connect_retried.addr);
+        break;
+    case ZMQ_EVENT_LISTENING:
+        free (event->data.listening.addr);
+        break;
+    case ZMQ_EVENT_BIND_FAILED:
+        free (event->data.bind_failed.addr);
+        break;
+    case ZMQ_EVENT_ACCEPTED:
+        free (event->data.accepted.addr);
+        break;
+    case ZMQ_EVENT_ACCEPT_FAILED:
+        free (event->data.accept_failed.addr);
+        break;
+    case ZMQ_EVENT_CLOSED:
+        free (event->data.closed.addr);
+        break;
+    case ZMQ_EVENT_CLOSE_FAILED:
+        free (event->data.close_failed.addr);
+        break;
+    case ZMQ_EVENT_DISCONNECTED:
+        free (event->data.disconnected.addr);
+        break;
+    }
+    free (event_data);
 }
