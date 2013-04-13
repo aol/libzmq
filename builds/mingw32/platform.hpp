@@ -1,6 +1,6 @@
 /*
-    Copyright (c) 2007-2012 iMatix Corporation
-    Copyright (c) 2007-2012 Other contributors as noted in the AUTHORS file
+    Copyright (c) 2007-2011 iMatix Corporation
+    Copyright (c) 2007-2011 Other contributors as noted in the AUTHORS file
 
     This file is part of 0MQ.
 
@@ -18,28 +18,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __ZMQ_I_MSG_SOURCE_HPP_INCLUDED__
-#define __ZMQ_I_MSG_SOURCE_HPP_INCLUDED__
+#ifndef __ZMQ_PLATFORM_HPP_INCLUDED__
+#define __ZMQ_PLATFORM_HPP_INCLUDED__
 
-namespace zmq
-{
+//  This is the platform definition for the MSVC platform.
+//  As a first step of the build process it is copied to
+//  zmq directory to take place of platform.hpp generated from
+//  platform.hpp.in on platforms supported by GNU autotools.
+//  Place any MSVC-specific definitions here.
 
-    //  Forward declaration
-    class msg_t;
-
-    //  Interface to be implemented by message source.
-
-    class i_msg_source
-    {
-    public:
-        virtual ~i_msg_source () {}
-
-        //  Fetch a message. Returns 0 if successful; -1 otherwise.
-        //  The caller is responsible for freeing the message when no
-        //  longer used.
-        virtual int pull_msg (msg_t *msg_) = 0;
-    };
-
-}
+#define ZMQ_HAVE_WINDOWS
 
 #endif

@@ -1,7 +1,5 @@
 /*
-    Copyright (c) 2009-2011 250bpm s.r.o.
-    Copyright (c) 2007-2010 iMatix Corporation
-    Copyright (c) 2007-2011 Other contributors as noted in the AUTHORS file
+    Copyright (c) 2007-2013 Contributors as noted in the AUTHORS file
 
     This file is part of 0MQ.
 
@@ -148,7 +146,7 @@ int zmq::tcp_listener_t::get_address (std::string &addr_)
 int zmq::tcp_listener_t::set_address (const char *addr_)
 {
     //  Convert the textual address into address structure.
-    int rc = address.resolve (addr_, true, options.ipv4only ? true : false);
+    int rc = address.resolve (addr_, true, options.ipv6);
     if (rc != 0)
         return -1;
 
@@ -160,8 +158,9 @@ int zmq::tcp_listener_t::set_address (const char *addr_)
 #endif
 
     //  IPv6 address family not supported, try automatic downgrade to IPv4.
-    if (address.family () == AF_INET6 && errno == EAFNOSUPPORT &&
-          !options.ipv4only) {
+    if (address.family () == AF_INET6
+    && errno == EAFNOSUPPORT
+    && options.ipv6) {
         rc = address.resolve (addr_, true, true);
         if (rc != 0)
             return rc;
@@ -173,9 +172,11 @@ int zmq::tcp_listener_t::set_address (const char *addr_)
         errno = wsa_error_to_errno (WSAGetLastError ());
         return -1;
     }
+#if !defined _WIN32_WCE
     //  On Windows, preventing sockets to be inherited by child processes.
     BOOL brc = SetHandleInformation ((HANDLE) s, HANDLE_FLAG_INHERIT, 0);
     win_assert (brc);
+#endif
 #else
     if (s == -1)
         return -1;
@@ -257,9 +258,11 @@ zmq::fd_t zmq::tcp_listener_t::accept ()
             WSAGetLastError () == WSAENOBUFS);
         return retired_fd;
     }
+#if !defined _WIN32_WCE
     //  On Windows, preventing sockets to be inherited by child processes.
     BOOL brc = SetHandleInformation ((HANDLE) sock, HANDLE_FLAG_INHERIT, 0);
     win_assert (brc);
+#endif
 #else
     if (sock == -1) {
         errno_assert (errno == EAGAIN || errno == EWOULDBLOCK ||

@@ -60,7 +60,8 @@ ZMQ_SNDHWM: Retrieves high water mark for outbound messages
 The 'ZMQ_SNDHWM' option shall return the high water mark for outbound messages
 on the specified 'socket'. The high water mark is a hard limit on the maximum
 number of outstanding messages 0MQ shall queue in memory for any single peer
-that the specified 'socket' is communicating with.
+that the specified 'socket' is communicating with. A value of zero means no
+limit.
 
 If this limit has been reached the socket shall enter an exceptional state and
 depending on the socket type, 0MQ shall take appropriate action such as
@@ -80,7 +81,8 @@ ZMQ_RCVHWM: Retrieve high water mark for inbound messages
 The 'ZMQ_RCVHWM' option shall return the high water mark for inbound messages on
 the specified 'socket'. The high water mark is a hard limit on the maximum
 number of outstanding messages 0MQ shall queue in memory for any single peer
-that the specified 'socket' is communicating with.
+that the specified 'socket' is communicating with. A value of zero means no
+limit.
 
 If this limit has been reached the socket shall enter an exceptional state and
 depending on the socket type, 0MQ shall take appropriate action such as
@@ -324,12 +326,24 @@ Default value:: -1 (infinite)
 Applicable socket types:: all
 
 
+ZMQ_IPV6: Retrieve IPv6 socket status
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Retrieve the IPv6 option for the socket. A value of `1` means IPv6 is
+enabled on the socket, while `0` means the socket will use only IPv4.
+When IPv6 is enabled the socket will connect to, or accept connections
+from, both IPv4 and IPv6 hosts.
+
+[horizontal]
+Option value type:: int
+Option value unit:: boolean
+Default value:: 0 (false)
+Applicable socket types:: all, when using TCP transports.
+
+
 ZMQ_IPV4ONLY: Retrieve IPv4-only socket override status
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Retrieve the underlying native socket type.  A value of `1` will use IPv4
-sockets, while the value of `0` will use IPv6 sockets. An IPv6 socket
-lets applications connect to and accept connections from both IPv4 and IPv6
-hosts.
+Retrieve the IPv4-only option for the socket. This option is deprecated.
+Please use the ZMQ_IPV6 option.
 
 [horizontal]
 Option value type:: int
@@ -469,6 +483,7 @@ Option value type:: int
 Option value unit:: -1,>0
 Default value:: -1 (leave to OS default)
 Applicable socket types:: all, when using TCP transports.
+
 
 RETURN VALUE
 ------------

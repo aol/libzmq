@@ -1,8 +1,5 @@
 /*
-    Copyright (c) 2009-2011 250bpm s.r.o.
-    Copyright (c) 2007-2009 iMatix Corporation
-    Copyright (c) 2011 VMware, Inc.
-    Copyright (c) 2007-2011 Other contributors as noted in the AUTHORS file
+    Copyright (c) 2007-2013 Contributors as noted in the AUTHORS file
 
     This file is part of 0MQ.
 
@@ -141,7 +138,7 @@ zmq::req_session_t::req_session_t (io_thread_t *io_thread_, bool connect_,
       socket_base_t *socket_, const options_t &options_,
       const address_t *addr_) :
     dealer_session_t (io_thread_, connect_, socket_, options_, addr_),
-    state (identity)
+    state (bottom)
 {
 }
 
@@ -166,12 +163,6 @@ int zmq::req_session_t::push_msg (msg_t *msg_)
             return dealer_session_t::push_msg (msg_);
         }
         break;
-    case identity:
-        if (msg_->flags () == 0) {
-            state = bottom;
-            return dealer_session_t::push_msg (msg_);
-        }
-        break;
     }
     errno = EFAULT;
     return -1;
@@ -180,5 +171,5 @@ int zmq::req_session_t::push_msg (msg_t *msg_)
 void zmq::req_session_t::reset ()
 {
     session_base_t::reset ();
-    state = identity;
+    state = bottom;
 }

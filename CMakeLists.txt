@@ -27,7 +27,7 @@ if(NOT ${POLLER} STREQUAL "")
   set(ZMQ_FORCE_${UPPER_POLLER} 1)
 endif()
 
-set(ZMQ_CMAKE_MODULES_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake/Modules)
+set(ZMQ_CMAKE_MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 list(APPEND CMAKE_MODULE_PATH ${ZMQ_CMAKE_MODULES_DIR})
 
 include(TestZMQVersion)
@@ -42,7 +42,7 @@ include(CheckCSourceRuns)
 include(CMakeDependentOption)
 
 check_include_files(ifaddrs.h ZMQ_HAVE_IFADDRS)
-check_include_files(windows.h HAVE_WINDOWS_H)
+check_include_files(windows.h ZMQ_HAVE_WINDOWS)
 check_include_files(sys/uio.h ZMQ_HAVE_UIO)
 check_include_files(sys/eventfd.h ZMQ_HAVE_EVENTFD)
 
@@ -50,6 +50,8 @@ check_library_exists(ws2_32 printf "" HAVE_WS2_32) # TODO: Why doesn't something
 check_library_exists(ws2 printf "" HAVE_WS2)
 check_library_exists(rpcrt4 printf "" HAVE_RPCRT4) # UuidCreateSequential
 check_library_exists(iphlpapi printf "" HAVE_IPHLAPI) # GetAdaptersAddresses
+
+find_library(RT_LIBRARY rt)
 
 find_package(Threads)
 
@@ -290,10 +292,8 @@ set(cxx-sources
         clock.cpp
         ctx.cpp
         dealer.cpp
-        decoder.cpp
         devpoll.cpp
         dist.cpp
-        encoder.cpp
         epoll.cpp
         err.cpp
         fq.cpp
@@ -344,6 +344,8 @@ set(cxx-sources
         trie.cpp
         v1_decoder.cpp
         v1_encoder.cpp
+        v2_decoder.cpp
+        v2_encoder.cpp
         xpub.cpp
         xsub.cpp
         zmq.cpp
@@ -540,6 +542,10 @@ if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug") # Why?
   foreach(perf-tool ${perf-tools})
     add_executable(${perf-tool} perf/${perf-tool}.cpp)
     target_link_libraries(${perf-tool} libzmq)
+
+    if(RT_LIBRARY)
+      target_link_libraries(${perf-tool} ${RT_LIBRARY})
+    endif()
 
     if(ZMQ_BUILD_FRAMEWORK)
       # Copy perf-tools binaries into Framework

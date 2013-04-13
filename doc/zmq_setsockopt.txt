@@ -31,7 +31,8 @@ ZMQ_SNDHWM: Set high water mark for outbound messages
 The 'ZMQ_SNDHWM' option shall set the high water mark for outbound messages on
 the specified 'socket'. The high water mark is a hard limit on the maximum
 number of outstanding messages 0MQ shall queue in memory for any single peer
-that the specified 'socket' is communicating with.
+that the specified 'socket' is communicating with. A value of zero means no
+limit.
 
 If this limit has been reached the socket shall enter an exceptional state and
 depending on the socket type, 0MQ shall take appropriate action such as
@@ -55,7 +56,8 @@ ZMQ_RCVHWM: Set high water mark for inbound messages
 The 'ZMQ_RCVHWM' option shall set the high water mark for inbound messages on
 the specified 'socket'. The high water mark is a hard limit on the maximum
 number of outstanding messages 0MQ shall queue in memory for any single peer
-that the specified 'socket' is communicating with.
+that the specified 'socket' is communicating with. A value of zero means no
+limit.
 
 If this limit has been reached the socket shall enter an exceptional state and
 depending on the socket type, 0MQ shall take appropriate action such as
@@ -342,12 +344,26 @@ Default value:: -1 (infinite)
 Applicable socket types:: all
 
 
-ZMQ_IPV4ONLY: Use IPv4-only sockets
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ZMQ_IPV6: Enable IPv6 on socket
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Sets the underlying native socket type.  A value of `1` will use IPv4 sockets,
-while the value of `0` will use IPv6 sockets. An IPv6 socket lets 
-applications connect to and accept connections from both IPv4 and IPv6 hosts.
+Set the IPv6 option for the socket. A value of `1` means IPv6 is
+enabled on the socket, while `0` means the socket will use only IPv4.
+When IPv6 is enabled the socket will connect to, or accept connections
+from, both IPv4 and IPv6 hosts.
+
+[horizontal]
+Option value type:: int
+Option value unit:: boolean
+Default value:: 0 (false)
+Applicable socket types:: all, when using TCP transports.
+
+
+ZMQ_IPV4ONLY: Use IPv4-only on socket
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Set the IPv4-only option for the socket. This option is deprecated.
+Please use the ZMQ_IPV6 option.
 
 [horizontal]
 Option value type:: int
@@ -356,12 +372,15 @@ Default value:: 1 (true)
 Applicable socket types:: all, when using TCP transports.
 
 
-ZMQ_DELAY_ATTACH_ON_CONNECT: Accept messages only when connections are made
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ZMQ_IMMEDIATE: Queue messages only to completed connections
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If set to `1`, will delay the attachment of a pipe on connect until the underlying
-connection has completed. This will cause the socket to block if there are no other
-connections, but will prevent queues from filling on pipes awaiting connection.
+By default queues will fill on outgoing connections even if the connection has
+not completed. This can lead to "lost" messages on sockets with round-robin
+routing (REQ, PUSH, DEALER). If this option is set to `1`, messages shall be
+queued only to completed connections. This will cause the socket to block if
+there are no other connections, but will prevent queues from filling on pipes
+awaiting connection.
 
 [horizontal]
 Option value type:: int

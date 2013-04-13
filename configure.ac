@@ -10,7 +10,7 @@ AC_INIT([zeromq],[m4_esyscmd([./version.sh])],[zeromq-dev@lists.zeromq.org])
 
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
-AM_CONFIG_HEADER(src/platform.hpp)
+AC_CONFIG_HEADERS([src/platform.hpp])
 AM_INIT_AUTOMAKE(tar-ustar dist-zip foreign)
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
@@ -75,7 +75,7 @@ libzmq_werror="yes"
 # By default use DSO visibility
 libzmq_dso_visibility="yes"
 
-# Whether we are on mingw or android or not.
+# Platform specific checks
 libzmq_on_mingw32="no"
 libzmq_on_android="no"
 

@@ -1,6 +1,5 @@
 /*
-    Copyright (c) 2009-2011 250bpm s.r.o.
-    Copyright (c) 2007-2011 Other contributors as noted in the AUTHORS file
+    Copyright (c) 2007-2013 Contributors as noted in the AUTHORS file
 
     This file is part of 0MQ.
 
@@ -27,7 +26,9 @@ extern "C" {
 
 /*  Handle DSO symbol visibility                                             */
 #if defined _WIN32
-#   if defined DLL_EXPORT
+#   if defined ZMQ_STATIC
+#       define ZMQ_EXPORT
+#   elif defined DLL_EXPORT
 #       define ZMQ_EXPORT __declspec(dllexport)
 #   else
 #       define ZMQ_EXPORT __declspec(dllimport)

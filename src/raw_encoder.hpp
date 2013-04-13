@@ -1,7 +1,5 @@
 /*
-    Copyright (c) 2009-2011 250bpm s.r.o.
-    Copyright (c) 2007-2009 iMatix Corporation
-    Copyright (c) 2007-2012 Other contributors as noted in the AUTHORS file
+    Copyright (c) 2007-2013 Contributors as noted in the AUTHORS file
 
     This file is part of 0MQ.
 
@@ -46,19 +44,13 @@ namespace zmq
     {
     public:
 
-        raw_encoder_t (size_t bufsize_, i_msg_source *msg_source_);
+        raw_encoder_t (size_t bufsize_);
         ~raw_encoder_t ();
-
-        void set_msg_source (i_msg_source *msg_source_);
 
     private:
 
-        bool raw_message_ready ();
-        bool raw_message_size_ready ();
+        void raw_message_ready ();
 
-        i_msg_source *msg_source;
-        msg_t in_progress;
-        unsigned char tmpbuf [4];
         raw_encoder_t (const raw_encoder_t&);
         const raw_encoder_t &operator = (const raw_encoder_t&);
     };

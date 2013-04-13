@@ -1,8 +1,5 @@
 /*
-    Copyright (c) 2009-2011 250bpm s.r.o.
-    Copyright (c) 2007-2009 iMatix Corporation
-    Copyright (c) 2010-2011 Miru Limited
-    Copyright (c) 2007-2011 Other contributors as noted in the AUTHORS file
+    Copyright (c) 2007-2013 Contributors as noted in the AUTHORS file
 
     This file is part of 0MQ.
 
@@ -339,10 +336,11 @@ int zmq::pgm_socket_t::init (bool udp_encapsulation_, const char *network_)
 		    goto err_abort;
 
 		//  Expedited Forwarding PHB for network elements, no ECN.
+		//  Ignore return value due to varied runtime support.
 		const int dscp = 0x2e << 2;
-		if (AF_INET6 != sa_family && !pgm_setsockopt (sock,
-		      IPPROTO_PGM, PGM_TOS, &dscp, sizeof (dscp)))
-		    goto err_abort;
+		if (AF_INET6 != sa_family)
+		    pgm_setsockopt (sock, IPPROTO_PGM, PGM_TOS,
+		       &dscp, sizeof (dscp));
 
 		const int nonblocking = 1;
 		if (!pgm_setsockopt (sock, IPPROTO_PGM, PGM_NOBLOCK,

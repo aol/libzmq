@@ -1,7 +1,5 @@
 /*
-    Copyright (c) 2010-2011 250bpm s.r.o.
-    Copyright (c) 2011 VMware, Inc.
-    Copyright (c) 2010-2011 Other contributors as noted in the AUTHORS file
+    Copyright (c) 2007-2013 Contributors as noted in the AUTHORS file
 
     This file is part of 0MQ.
 
@@ -87,17 +85,17 @@ int zmq::xsub_t::xsend (msg_t *msg_)
     size_t size = msg_->size ();
     unsigned char *data = (unsigned char*) msg_->data ();
 
-    if (*data == 1) {
+    if (size > 0 && *data == 1) {
         //  Process subscribe message
-	//  This used to filter out duplicate subscriptions,
-	//  however this is alread done on the XPUB side and
-	//  doing it here as well breaks ZMQ_XPUB_VERBOSE
-	//  when there are forwarding devices involved.
+        //  This used to filter out duplicate subscriptions,
+        //  however this is alread done on the XPUB side and
+        //  doing it here as well breaks ZMQ_XPUB_VERBOSE
+        //  when there are forwarding devices involved.
         subscriptions.add (data + 1, size - 1);
         return dist.send_to_all (msg_);
     }
     else 
-    if (*data == 0) {
+    if (size > 0 && *data == 0) {
         //  Process unsubscribe message
         if (subscriptions.rm (data + 1, size - 1))
             return dist.send_to_all (msg_);

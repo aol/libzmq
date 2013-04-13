@@ -1,7 +1,5 @@
 /*
-    Copyright (c) 2010-2011 250bpm s.r.o.
-    Copyright (c) 2011 VMware, Inc.
-    Copyright (c) 2010-2011 Other contributors as noted in the AUTHORS file
+    Copyright (c) 2007-2013 Contributors as noted in the AUTHORS file
 
     This file is part of 0MQ.
 
@@ -98,7 +96,7 @@ int zmq::xpub_t::xsetsockopt (int option_, const void *optval_,
         errno = EINVAL;
         return -1;
     }
-    verbose = *static_cast <const int*> (optval_);
+    verbose = (*static_cast <const int*> (optval_) != 0);
     return 0;
 }
 

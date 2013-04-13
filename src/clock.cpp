@@ -1,6 +1,5 @@
 /*
-    Copyright (c) 2010-2011 250bpm s.r.o.
-    Copyright (c) 2010-2011 Other contributors as noted in the AUTHORS file
+    Copyright (c) 2007-2013 Contributors as noted in the AUTHORS file
 
     This file is part of 0MQ.
 
@@ -27,7 +26,7 @@
 #include <stddef.h>
 
 #if defined _MSC_VER
-#if defined WINCE
+#if defined _WIN32_WCE
 #include <cmnintrin.h>
 #else
 #include <intrin.h>
@@ -66,7 +65,7 @@ uint64_t zmq::clock_t::now_us ()
 
     //  Convert the tick number into the number of seconds
     //  since the system was started.
-    double ticks_div = (double) (ticksPerSecond.QuadPart / 1000000);     
+    double ticks_div = ticksPerSecond.QuadPart / 1000000.0;     
     return (uint64_t) (tick.QuadPart / ticks_div);
 
 #elif defined HAVE_CLOCK_GETTIME && defined CLOCK_MONOTONIC

@@ -1,8 +1,5 @@
 /*
-    Copyright (c) 2007-2012 iMatix Corporation
-    Copyright (c) 2009-2011 250bpm s.r.o.
-    Copyright (c) 2011 VMware, Inc.
-    Copyright (c) 2007-2011 Other contributors as noted in the AUTHORS file
+    Copyright (c) 2007-2013 Contributors as noted in the AUTHORS file
 
     This file is part of 0MQ.
 
@@ -27,9 +24,10 @@
 extern "C" {
 #endif
 
-#if !defined WINCE
+#if !defined _WIN32_WCE
 #include <errno.h>
 #endif
+#include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
 #if defined _WIN32
@@ -38,7 +36,9 @@ extern "C" {
 
 /*  Handle DSO symbol visibility                                             */
 #if defined _WIN32
-#   if defined DLL_EXPORT
+#   if defined ZMQ_STATIC
+#       define ZMQ_EXPORT
+#   elif defined DLL_EXPORT
 #       define ZMQ_EXPORT __declspec(dllexport)
 #   else
 #       define ZMQ_EXPORT __declspec(dllimport)
@@ -163,13 +163,14 @@ ZMQ_EXPORT const char *zmq_strerror (int errnum);
 #define ZMQ_MAX_SOCKETS_DFLT 1024
 
 ZMQ_EXPORT void *zmq_ctx_new (void);
-ZMQ_EXPORT int zmq_ctx_destroy (void *context);
+ZMQ_EXPORT int zmq_ctx_term (void *context);
 ZMQ_EXPORT int zmq_ctx_set (void *context, int option, int optval);
 ZMQ_EXPORT int zmq_ctx_get (void *context, int option);
 
 /*  Old (legacy) API                                                          */
 ZMQ_EXPORT void *zmq_init (int io_threads);
 ZMQ_EXPORT int zmq_term (void *context);
+ZMQ_EXPORT int zmq_ctx_destroy (void *context);
 
 
 /******************************************************************************/
@@ -240,7 +241,7 @@ ZMQ_EXPORT int zmq_msg_set (zmq_msg_t *msg, int option, int optval);
 #define ZMQ_MULTICAST_HOPS 25
 #define ZMQ_RCVTIMEO 27
 #define ZMQ_SNDTIMEO 28
-#define ZMQ_IPV4ONLY 31
+#define ZMQ_IPV4ONLY 31              /*  Request replacement by IPV6          */
 #define ZMQ_LAST_ENDPOINT 32
 #define ZMQ_ROUTER_MANDATORY 33
 #define ZMQ_TCP_KEEPALIVE 34
@@ -248,10 +249,10 @@ ZMQ_EXPORT int zmq_msg_set (zmq_msg_t *msg, int option, int optval);
 #define ZMQ_TCP_KEEPALIVE_IDLE 36
 #define ZMQ_TCP_KEEPALIVE_INTVL 37
 #define ZMQ_TCP_ACCEPT_FILTER 38
-#define ZMQ_DELAY_ATTACH_ON_CONNECT 39
+#define ZMQ_IMMEDIATE 39
 #define ZMQ_XPUB_VERBOSE 40
 #define ZMQ_ROUTER_RAW 41
-
+#define ZMQ_IPV6 42
 
 /*  Message options                                                           */
 #define ZMQ_MORE 1
@@ -261,9 +262,10 @@ ZMQ_EXPORT int zmq_msg_set (zmq_msg_t *msg, int option, int optval);
 #define ZMQ_SNDMORE 2
 
 /*  Deprecated aliases                                                        */
-#define ZMQ_NOBLOCK ZMQ_DONTWAIT
-#define ZMQ_FAIL_UNROUTABLE ZMQ_ROUTER_MANDATORY
-#define ZMQ_ROUTER_BEHAVIOR ZMQ_ROUTER_MANDATORY
+#define ZMQ_DELAY_ATTACH_ON_CONNECT ZMQ_IMMEDIATE
+#define ZMQ_NOBLOCK                 ZMQ_DONTWAIT
+#define ZMQ_FAIL_UNROUTABLE         ZMQ_ROUTER_MANDATORY
+#define ZMQ_ROUTER_BEHAVIOR         ZMQ_ROUTER_MANDATORY
 
 /******************************************************************************/
 /*  0MQ socket events and monitoring                                          */
@@ -290,51 +292,10 @@ ZMQ_EXPORT int zmq_msg_set (zmq_msg_t *msg, int option, int optval);
                         ZMQ_EVENT_ACCEPT_FAILED | ZMQ_EVENT_CLOSED | \
                         ZMQ_EVENT_CLOSE_FAILED | ZMQ_EVENT_DISCONNECTED )
 
-/*  Socket event data (union member per event)                                */
+/*  Socket event data  */
 typedef struct {
-    int event;
-    union {
-    struct {
-        char *addr;
-        int fd;
-    } connected;
-    struct {
-        char *addr;
-        int err;
-    } connect_delayed;
-    struct {
-        char *addr;
-        int interval;
-    } connect_retried;
-    struct {
-        char *addr;
-        int fd;
-    } listening;
-    struct {
-        char *addr;
-        int err;
-    } bind_failed;
-    struct {
-        char *addr;
-        int fd;
-    } accepted;
-    struct {
-        char *addr;
-        int err;
-    } accept_failed;
-    struct {
-        char *addr;
-        int fd;
-    } closed;
-    struct {
-        char *addr;
-        int err;
-    } close_failed;
-    struct {
-        char *addr;
-        int fd;
-    } disconnected;
-    } data;
+    uint16_t event;  // id of the event as bitfield
+    int32_t  value ; // value is either error code, fd or reconnect interval
 } zmq_event_t;
 
 ZMQ_EXPORT void *zmq_socket (void *, int type);
@@ -379,6 +340,8 @@ typedef struct
     short events;
     short revents;
 } zmq_pollitem_t;
+
+#define ZMQ_POLLITEMS_DFLT 16
 
 ZMQ_EXPORT int zmq_poll (zmq_pollitem_t *items, int nitems, long timeout);
 
