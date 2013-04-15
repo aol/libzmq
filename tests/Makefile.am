@@ -9,12 +9,10 @@ noinst_PROGRAMS = test_pair_inproc \
                   test_reqrep_tcp \
                   test_hwm \
                   test_reqrep_device \
-                  test_sub_forward \
                   test_invalid_rep \
                   test_msg_flags \
                   test_connect_resolve \
                   test_last_endpoint \
-                  test_term_endpoint \
                   test_router_mandatory \
                   test_raw_sock \
                   test_ctx_options
@@ -26,7 +24,9 @@ noinst_PROGRAMS += test_shutdown_stress \
                    test_timeo \
                    test_connect_delay \
                    test_monitor \
-                   test_disconnect_inproc
+                   test_disconnect_inproc \
+                   test_sub_forward
+                   test_term_endpoint
 endif
 
 test_pair_inproc_SOURCES = test_pair_inproc.cpp testutil.hpp
